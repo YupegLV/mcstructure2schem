@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "module": "UMD",
+    "target": "ES5",
+    "strict": true,
+    "declaration": true,
+    "outDir": "dist"
+  }
+}
