@@ -1,9 +1,21 @@
 {
-  "name": "conv-mcstruct-spongeschem",
+  "name": "prismarine-mcstructure-unofficial",
+  "description": "Convert between .mcstructure and prismarine-schematic",
   "version": "1.0.0",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/cjs/index.d.js",
+  "files": ["dist"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nova-27/prismarine-mcstructure-unofficial.git"
+  },
+  "keywords": [
+    "minecraft",
+    "library",
+    "mcstructure",
+    "prismarine"
+  ],
   "author": "nova27",
   "license": "MIT",
   "scripts": {
