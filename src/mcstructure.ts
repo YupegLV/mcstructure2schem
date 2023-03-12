@@ -24,10 +24,11 @@ type McStructure = {
 }
 
 async function parseMcStructure(
-  data: Buffer,
+  data: Buffer | McStructure,
   offset: Vec3 = new Vec3(0, 0, 0),
 ) {
-  const parsedNbt: McStructure = nbt.simplify((await nbt.parse(data)).parsed)
+  const parsedNbt: McStructure =
+    data instanceof Buffer ? nbt.simplify((await nbt.parse(data)).parsed) : data
 
   const majorVersion = verNum2majorVer(
     parsedNbt.structure.palette.default.block_palette[0].version,
@@ -99,4 +100,4 @@ function bedrock2java(name: string, states: { [k: string]: string | number }) {
   return javaBlock
 }
 
-export { parseMcStructure }
+export { McStructure, parseMcStructure }
