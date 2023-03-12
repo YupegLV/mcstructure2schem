@@ -18,13 +18,13 @@ npm install prismarine-mcstructure-unofficial
 ```js
 const fs = require('fs')
 const path = require('path')
-const { parseMcStructure } = require('prismarine-mcstructure-unofficial')
+const { parseMcStructureBuffer } = require('prismarine-mcstructure-unofficial')
 
 async function sample() {
   const sampleMcStructure = fs.readFileSync(
     path.join(__dirname, 'sample.mcstructure'),
   )
-  const schematic = await parseMcStructure(sampleMcStructure)
+  const schematic = await parseMcStructureBuffer(sampleMcStructure)
   const schemBuffer = await schematic.write()
   fs.writeFileSync(path.join(__dirname, 'sample.schem'), schemBuffer)
 }

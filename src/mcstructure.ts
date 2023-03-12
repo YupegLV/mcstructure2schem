@@ -23,22 +23,29 @@ type McStructure = {
   }
 }
 
-async function parseMcStructure(
-  data: Buffer | McStructure,
+async function parseMcStructureBuffer(
+  buffer: Buffer,
   offset: Vec3 = new Vec3(0, 0, 0),
 ) {
-  const parsedNbt: McStructure =
-    data instanceof Buffer ? nbt.simplify((await nbt.parse(data)).parsed) : data
-
-  const majorVersion = verNum2majorVer(
-    parsedNbt.structure.palette.default.block_palette[0].version,
+  return parseMcStructure(
+    await nbt.simplify((await nbt.parse(buffer)).parsed),
+    offset,
   )
-  const size = new Vec3(parsedNbt.size[0], parsedNbt.size[1], parsedNbt.size[2])
+}
+
+function parseMcStructure(
+  structure: McStructure,
+  offset: Vec3 = new Vec3(0, 0, 0),
+) {
+  const majorVersion = verNum2majorVer(
+    structure.structure.palette.default.block_palette[0].version,
+  )
+  const size = new Vec3(structure.size[0], structure.size[1], structure.size[2])
   const palette = parseBlockPalette(
     majorVersion,
-    parsedNbt.structure.palette.default.block_palette,
+    structure.structure.palette.default.block_palette,
   )
-  const blocks = zyx2xzy(parsedNbt.structure.block_indices[0], size)
+  const blocks = zyx2xzy(structure.structure.block_indices[0], size)
 
   return new Schematic(majorVersion, size, offset, palette, blocks)
 }
@@ -100,4 +107,4 @@ function bedrock2java(name: string, states: { [k: string]: string | number }) {
   return javaBlock
 }
 
-export { McStructure, parseMcStructure }
+export { McStructure, parseMcStructureBuffer, parseMcStructure }

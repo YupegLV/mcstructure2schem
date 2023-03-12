@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { parseMcStructure } from '../src'
+import { parseMcStructureBuffer } from '../src'
 import { Vec3 } from 'vec3'
 
 const blocksMcStructure = fs.readFileSync(
@@ -8,7 +8,7 @@ const blocksMcStructure = fs.readFileSync(
 )
 
 test('standard blocks', async () => {
-  const schematic = await parseMcStructure(blocksMcStructure)
+  const schematic = await parseMcStructureBuffer(blocksMcStructure)
   const expect_blocks = {
     '0,0,0': 'gold_block',
     '0,0,1': 'diamond_block',
