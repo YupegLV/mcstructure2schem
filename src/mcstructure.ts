@@ -25,29 +25,34 @@ type McStructure = {
 
 async function parseMcStructureBuffer(
   buffer: Buffer,
+  version?: string,
   offset: Vec3 = new Vec3(0, 0, 0),
 ) {
   return parseMcStructure(
     await nbt.simplify((await nbt.parse(buffer)).parsed),
+    version,
     offset,
   )
 }
 
 function parseMcStructure(
   structure: McStructure,
+  version?: string,
   offset: Vec3 = new Vec3(0, 0, 0),
 ) {
-  const majorVersion = verNum2majorVer(
-    structure.structure.palette.default.block_palette[0].version,
-  )
+  if (!version) {
+    version = verNum2majorVer(
+      structure.structure.palette.default.block_palette[0].version,
+    )
+  }
   const size = new Vec3(structure.size[0], structure.size[1], structure.size[2])
   const palette = parseBlockPalette(
-    majorVersion,
+    version,
     structure.structure.palette.default.block_palette,
   )
   const blocks = zyx2xzy(structure.structure.block_indices[0], size)
 
-  return new Schematic(majorVersion, size, offset, palette, blocks)
+  return new Schematic(version, size, offset, palette, blocks)
 }
 
 function zyx2xzy<T>(src: T[], size: Vec3) {
