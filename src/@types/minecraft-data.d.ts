@@ -6,7 +6,7 @@ declare module 'minecraft-data/minecraft-data/data/bedrock/1.19.1/blockMappings.
     }
     pe: {
       name: string
-      states: { [k: string]: string | number }
+      states: { [k: string]: string | number | boolean }
     }
   }
 

@@ -5,11 +5,11 @@ import { Schematic } from 'prismarine-schematic'
 import { Vec3 } from 'vec3'
 import { getStateId } from 'prismarine-schematic/lib/states'
 
-type BlockPalette = {
+type BlockInfo = {
   name: string
   states: { [k: string]: string | number }
   version: number
-}[]
+}
 
 type McStructure = {
   size: [number, number, number]
@@ -17,7 +17,7 @@ type McStructure = {
     block_indices: [number[], number[]]
     palette: {
       default: {
-        block_palette: BlockPalette
+        block_palette: BlockInfo[]
       }
     }
   }
@@ -77,7 +77,7 @@ function verNum2majorVer(version: number) {
   return versionArray.reverse().slice(0, 2).join('.')
 }
 
-function parseBlockPalette(version: string, palette: BlockPalette) {
+function parseBlockPalette(version: string, palette: BlockInfo[]) {
   const javaMcData = minecraftData(version)
   const javaPalette = palette.map((block) => {
     const javaBlock = bedrock2java(
@@ -93,12 +93,12 @@ function parseBlockPalette(version: string, palette: BlockPalette) {
   return javaPalette
 }
 
-function bedrock2java(name: string, states: { [k: string]: string | number }) {
+function bedrock2java(name: string, states: BlockInfo['states']) {
   let javaBlock = blockMappings.find(
     (mapping) =>
       mapping.pe.name === name &&
       Object.entries(mapping.pe.states).every(
-        ([search_key, search_value]) => states[search_key] === search_value,
+        ([search_key, search_value]) => states[search_key] == search_value,
       ),
   )?.pc
   if (!javaBlock) {
