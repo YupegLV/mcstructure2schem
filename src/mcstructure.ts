@@ -46,13 +46,17 @@ function parseMcStructure(
     )
   }
   const size = new Vec3(structure.size[0], structure.size[1], structure.size[2])
-  const palette = parseBlockPalette(
-    version,
-    structure.structure.palette.default.block_palette,
+  const paletteData = structure.structure.palette.default.block_palette.map(
+    (block) => bedrock2java(block.name.replace('minecraft:', ''), block.states),
   )
   const blocks = zyx2xzy(structure.structure.block_indices[0], size)
+  const { adjustedPalette, adjustedBlocks } = adjustStates(
+    version,
+    paletteData,
+    blocks,
+  )
 
-  return new Schematic(version, size, offset, palette, blocks)
+  return new Schematic(version, size, offset, adjustedPalette, adjustedBlocks)
 }
 
 function zyx2xzy<T>(src: T[], size: Vec3) {
@@ -77,22 +81,6 @@ function verNum2majorVer(version: number) {
   return versionArray.reverse().slice(0, 2).join('.')
 }
 
-function parseBlockPalette(version: string, palette: BlockInfo[]) {
-  const javaMcData = minecraftData(version)
-  const javaPalette = palette.map((block) => {
-    const javaBlock = bedrock2java(
-      block.name.replace('minecraft:', ''),
-      block.states,
-    )
-    const stringizedStates = Object.entries(javaBlock.states).map<
-      [string, string]
-    >(([key, value]) => [key, value.toString()])
-
-    return getStateId(javaMcData, javaBlock.name, stringizedStates)
-  })
-  return javaPalette
-}
-
 function bedrock2java(name: string, states: BlockInfo['states']) {
   let javaBlock = blockMappings.find(
     (mapping) =>
@@ -110,6 +98,27 @@ function bedrock2java(name: string, states: BlockInfo['states']) {
     javaBlock = blockMappings[0].pc
   }
   return javaBlock
+}
+
+function adjustStates(
+  version: string,
+  paletteData: {
+    name: string
+    states: { [k: string]: string | number | boolean }
+  }[],
+  blocks: number[],
+) {
+  const javaMcData = minecraftData(version)
+  const adjustedPalette = paletteData.map((block) => {
+    const stringizedStates = Object.entries(block.states).map<[string, string]>(
+      ([key, value]) => [key, value.toString()],
+    )
+
+    return getStateId(javaMcData, block.name, stringizedStates)
+  })
+  const adjustedBlocks = blocks
+
+  return { adjustedPalette, adjustedBlocks }
 }
 
 export { McStructure, parseMcStructureBuffer, parseMcStructure }
