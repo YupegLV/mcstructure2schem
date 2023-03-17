@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { parseMcStructureBuffer } from '../src'
+import { parseMcStructureBuffer } from 'prismarine-mcstructure-unofficial'
 import { Vec3 } from 'vec3'
 
 const blocksMcStructure = fs.readFileSync(
