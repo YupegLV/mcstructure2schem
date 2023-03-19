@@ -1,31 +1,10 @@
 import nbt from 'prismarine-nbt'
-import minecraftData from 'minecraft-data'
-import blockMappings, {
-  MappingData,
-} from 'minecraft-data/minecraft-data/data/bedrock/1.19.1/blockMappings.json'
+import { MappingData } from 'minecraft-data/minecraft-data/data/bedrock/1.19.1/blockMappings.json'
 import { Schematic } from 'prismarine-schematic'
 import { Vec3 } from 'vec3'
-import { getStateId } from 'prismarine-schematic/lib/states'
 import { BlockModifier, CardinalDirection } from './blockModifier'
 import _ from 'lodash'
-
-type BlockInfo = {
-  name: string
-  states: { [k: string]: string | number }
-  version: number
-}
-
-type McStructure = {
-  size: [number, number, number]
-  structure: {
-    block_indices: [number[], number[]]
-    palette: {
-      default: {
-        block_palette: BlockInfo[]
-      }
-    }
-  }
-}
+import { McStructure } from './types'
 
 async function parseMcStructureBuffer(
   buffer: Buffer,
@@ -50,31 +29,21 @@ function parseMcStructure(
     )
   }
   const size = new Vec3(structure.size[0], structure.size[1], structure.size[2])
-  const paletteData = structure.structure.palette.default.block_palette.map(
-    (block) => bedrock2java(block.name.replace('minecraft:', ''), block.states),
+
+  const modifier = BlockModifier.fromMcStructure(
+    structure.structure.palette.default.block_palette,
+    structure.structure.block_indices[0],
+    size,
   )
-  const blocks = zyx2xzy(structure.structure.block_indices[0], size)
-  const { adjustedPalette, adjustedBlocks } = adjustStates(
+  adjustStates(modifier)
+
+  return new Schematic(
     version,
     size,
-    paletteData,
-    blocks,
+    offset,
+    modifier.generateStateIdPalette(version),
+    modifier.indices,
   )
-
-  return new Schematic(version, size, offset, adjustedPalette, adjustedBlocks)
-}
-
-function zyx2xzy<T>(src: T[], size: Vec3) {
-  const out: T[] = []
-  for (let x = 0; x < size.x; x++) {
-    for (let y = 0; y < size.y; y++) {
-      for (let z = 0; z < size.z; z++) {
-        out[x + z * size.x + y * size.x * size.z] =
-          src[z + y * size.z + x * size.z * size.y]
-      }
-    }
-  }
-  return out
 }
 
 function verNum2majorVer(version: number) {
@@ -86,33 +55,7 @@ function verNum2majorVer(version: number) {
   return versionArray.reverse().slice(0, 2).join('.')
 }
 
-function bedrock2java(name: string, states: BlockInfo['states']) {
-  let javaBlock = blockMappings.find(
-    (mapping) =>
-      mapping.pe.name === name &&
-      Object.entries(mapping.pe.states).every(([search_key, search_value]) => {
-        return states[search_key] == search_value
-      }),
-  )?.pc
-  if (!javaBlock) {
-    console.warn(
-      `Unknown block ${name}[${Object.entries(states)
-        .map((state) => state.join('='))
-        .join(',')}] replacing with air`,
-    )
-    javaBlock = blockMappings[0].pc
-  }
-  return javaBlock
-}
-
-function adjustStates(
-  version: string,
-  size: Vec3,
-  paletteData: MappingData['pc'][],
-  blocks: number[],
-) {
-  const modifier = new BlockModifier(paletteData, blocks, size)
-
+function adjustStates(modifier: BlockModifier) {
   function getRelativeDirections(facing: CardinalDirection): {
     front: CardinalDirection
     back: CardinalDirection
@@ -147,9 +90,9 @@ function adjustStates(
     return block.name.includes('stairs')
   }
 
-  for (let x = 0; x < size.x; x++) {
-    for (let y = 0; y < size.y; y++) {
-      for (let z = 0; z < size.z; z++) {
+  for (let x = 0; x < modifier.size.x; x++) {
+    for (let y = 0; y < modifier.size.y; y++) {
+      for (let z = 0; z < modifier.size.z; z++) {
         const target = modifier.getBlock(x, y, z)
 
         if (isStair(target)) {
@@ -225,15 +168,6 @@ function adjustStates(
       }
     }
   }
-
-  const javaMcData = minecraftData(version)
-  const adjustedPalette = modifier.palette.map((block) => {
-    const stringizedStates = _.mapValues(block.states, _.toString)
-    return getStateId(javaMcData, block.name, Object.entries(stringizedStates))
-  })
-  const adjustedBlocks = blocks
-
-  return { adjustedPalette, adjustedBlocks }
 }
 
 export { McStructure, parseMcStructureBuffer, parseMcStructure }
