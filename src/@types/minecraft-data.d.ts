@@ -13,4 +13,5 @@ declare module 'minecraft-data/minecraft-data/data/bedrock/1.19.1/blockMappings.
   const data: MappingData[]
 
   export default data
+  export { MappingData }
 }

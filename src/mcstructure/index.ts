@@ -1,9 +1,13 @@
 import nbt from 'prismarine-nbt'
 import minecraftData from 'minecraft-data'
-import blockMappings from 'minecraft-data/minecraft-data/data/bedrock/1.19.1/blockMappings.json'
+import blockMappings, {
+  MappingData,
+} from 'minecraft-data/minecraft-data/data/bedrock/1.19.1/blockMappings.json'
 import { Schematic } from 'prismarine-schematic'
 import { Vec3 } from 'vec3'
 import { getStateId } from 'prismarine-schematic/lib/states'
+import { BlockModifier, CardinalDirection } from './blockModifier'
+import _ from 'lodash'
 
 type BlockInfo = {
   name: string
@@ -83,8 +87,12 @@ function verNum2majorVer(version: number) {
 }
 
 function bedrock2java(name: string, states: BlockInfo['states']) {
-  let javaBlock = blockMappings.find((mapping) =>
-    blockInfoEquals(mapping.pe, { name, states }),
+  let javaBlock = blockMappings.find(
+    (mapping) =>
+      mapping.pe.name === name &&
+      Object.entries(mapping.pe.states).every(([search_key, search_value]) => {
+        return states[search_key] == search_value
+      }),
   )?.pc
   if (!javaBlock) {
     console.warn(
@@ -97,73 +105,19 @@ function bedrock2java(name: string, states: BlockInfo['states']) {
   return javaBlock
 }
 
-type MappingBlockInfo = {
-  name: string
-  states: { [k: string]: string | number | boolean }
-}
-
-function blockInfoEquals(one: MappingBlockInfo, two: MappingBlockInfo) {
-  return (
-    one.name === two.name &&
-    Object.entries(one.states).every(
-      ([search_key, search_value]) => two.states[search_key] == search_value,
-    )
-  )
-}
-
-type XYZDirections = '+x' | '-x' | '+y' | '-y' | '+z' | '-z'
-type CardinalDirections = 'east' | 'west' | 'south' | 'north'
-
 function adjustStates(
   version: string,
   size: Vec3,
-  paletteData: MappingBlockInfo[],
+  paletteData: MappingData['pc'][],
   blocks: number[],
 ) {
-  function getBlock(x: number, y: number, z: number) {
-    const indexId = blocks[x + z * size.x + y * size.x * size.z]
-    return JSON.parse(JSON.stringify(paletteData[indexId]))
-  }
-  function setBlock(x: number, y: number, z: number, block: MappingBlockInfo) {
-    let indexId = paletteData.findIndex((data) => blockInfoEquals(data, block))
-    if (indexId === -1) {
-      indexId = paletteData.push(block) - 1
-    }
-    blocks[x + z * size.x + y * size.x * size.z] = indexId
-  }
-  function getAdjacentBlocks(x: number, y: number, z: number) {
-    const blocks: { [dir in XYZDirections]?: MappingBlockInfo } = {}
-    if (0 <= x + 1 && x + 1 < size.x) blocks['+x'] = getBlock(x + 1, y, z)
-    if (0 <= x - 1 && x - 1 < size.x) blocks['-x'] = getBlock(x - 1, y, z)
-    if (0 <= y + 1 && y + 1 < size.y) blocks['+y'] = getBlock(x, y + 1, z)
-    if (0 <= y - 1 && y - 1 < size.y) blocks['-y'] = getBlock(x, y - 1, z)
-    if (0 <= z + 1 && z + 1 < size.z) blocks['+z'] = getBlock(x, y, z + 1)
-    if (0 <= z - 1 && z - 1 < size.z) blocks['-z'] = getBlock(x, y, z - 1)
-    return blocks
-  }
-  function filterAdjacentsInCardinalDirections(
-    adjacents: ReturnType<typeof getAdjacentBlocks>,
-    directions: CardinalDirections[],
-  ) {
-    const cardinal2xyzMapping: { [k in CardinalDirections]: XYZDirections } = {
-      north: '-z',
-      south: '+z',
-      west: '-x',
-      east: '+x',
-    }
-    return directions
-      .map((dir) => cardinal2xyzMapping[dir])
-      .reduce((result, dir) => {
-        const adjacent = adjacents[dir]
-        if (adjacent) result.push(adjacent)
-        return result
-      }, [] as MappingBlockInfo[])
-  }
-  function getRelativeDirections(facing: CardinalDirections): {
-    front: CardinalDirections
-    back: CardinalDirections
-    left: CardinalDirections
-    right: CardinalDirections
+  const modifier = new BlockModifier(paletteData, blocks, size)
+
+  function getRelativeDirections(facing: CardinalDirection): {
+    front: CardinalDirection
+    back: CardinalDirection
+    left: CardinalDirection
+    right: CardinalDirection
   } {
     switch (facing) {
       case 'north':
@@ -177,7 +131,7 @@ function adjustStates(
     }
   }
   type StairStates = {
-    facing: CardinalDirections
+    facing: CardinalDirection
     half: 'bottom' | 'top'
     shape:
       | 'inner_left'
@@ -188,24 +142,26 @@ function adjustStates(
     waterlogged: boolean
   }
   function isStair(
-    block: MappingBlockInfo,
-  ): block is { name: string; states: StairStates } {
+    block: MappingData['pc'],
+  ): block is Readonly<{ name: string; states: StairStates }> {
     return block.name.includes('stairs')
   }
 
   for (let x = 0; x < size.x; x++) {
     for (let y = 0; y < size.y; y++) {
       for (let z = 0; z < size.z; z++) {
-        const target = getBlock(x, y, z)
+        const target = modifier.getBlock(x, y, z)
 
         if (isStair(target)) {
           const facing = target.states.facing
-          const adjacents = getAdjacentBlocks(x, y, z)
+          const adjacents = modifier.getAdjacentBlocks(x, y, z)
           const relativeDirections = getRelativeDirections(facing)
 
-          const straightAdjacents = filterAdjacentsInCardinalDirections(
-            adjacents,
-            [relativeDirections.left, relativeDirections.right],
+          const straightAdjacents = Object.values(
+            _.pick(adjacents, [
+              relativeDirections.left,
+              relativeDirections.right,
+            ]),
           )
           if (
             straightAdjacents.some(
@@ -215,53 +171,55 @@ function adjustStates(
                 adjacent.states.facing === target.states.facing,
             )
           ) {
-            target.states.shape = 'straight'
-            setBlock(x, y, z, target)
+            const modifiedBlock = _.cloneDeep(target)
+            modifiedBlock.states.shape = 'straight'
+            modifier.setBlock(x, y, z, modifiedBlock)
             continue
           }
 
-          const outerAdjacent = filterAdjacentsInCardinalDirections(adjacents, [
-            relativeDirections['front'],
-          ])[0]
+          const outerAdjacent = adjacents[relativeDirections['front']]
           if (
             outerAdjacent &&
             isStair(outerAdjacent) &&
             outerAdjacent.states.half === target.states.half
           ) {
             if (outerAdjacent.states.facing === relativeDirections['left']) {
-              target.states.shape = 'outer_left'
-              setBlock(x, y, z, target)
+              const modifiedBlock = _.cloneDeep(target)
+              modifiedBlock.states.shape = 'outer_left'
+              modifier.setBlock(x, y, z, modifiedBlock)
               continue
             }
             if (outerAdjacent.states.facing === relativeDirections['right']) {
-              target.states.shape = 'outer_right'
-              setBlock(x, y, z, target)
+              const modifiedBlock = _.cloneDeep(target)
+              modifiedBlock.states.shape = 'outer_right'
+              modifier.setBlock(x, y, z, modifiedBlock)
               continue
             }
           }
 
-          const innerAdjacent = filterAdjacentsInCardinalDirections(adjacents, [
-            relativeDirections.back,
-          ])[0]
+          const innerAdjacent = adjacents[relativeDirections['back']]
           if (
             innerAdjacent &&
             isStair(innerAdjacent) &&
             innerAdjacent.states.half === target.states.half
           ) {
             if (innerAdjacent.states.facing === relativeDirections['left']) {
-              target.states.shape = 'inner_left'
-              setBlock(x, y, z, target)
+              const modifiedBlock = _.cloneDeep(target)
+              modifiedBlock.states.shape = 'inner_left'
+              modifier.setBlock(x, y, z, modifiedBlock)
               continue
             }
             if (innerAdjacent.states.facing === relativeDirections['right']) {
-              target.states.shape = 'inner_right'
-              setBlock(x, y, z, target)
+              const modifiedBlock = _.cloneDeep(target)
+              modifiedBlock.states.shape = 'inner_right'
+              modifier.setBlock(x, y, z, modifiedBlock)
               continue
             }
           }
 
-          target.states.shape = 'straight'
-          setBlock(x, y, z, target)
+          const modifiedBlock = _.cloneDeep(target)
+          modifiedBlock.states.shape = 'straight'
+          modifier.setBlock(x, y, z, modifiedBlock)
           continue
         }
       }
@@ -269,12 +227,9 @@ function adjustStates(
   }
 
   const javaMcData = minecraftData(version)
-  const adjustedPalette = paletteData.map((block) => {
-    const stringizedStates = Object.entries(block.states).map<[string, string]>(
-      ([key, value]) => [key, value.toString()],
-    )
-
-    return getStateId(javaMcData, block.name, stringizedStates)
+  const adjustedPalette = modifier.palette.map((block) => {
+    const stringizedStates = _.mapValues(block.states, _.toString)
+    return getStateId(javaMcData, block.name, Object.entries(stringizedStates))
   })
   const adjustedBlocks = blocks
 
