@@ -44,9 +44,9 @@
   },
   "dependencies": {
     "lodash": "^4.17.21",
-    "minecraft-data": "^3.30.0",
-    "prismarine-nbt": "^2.2.1",
-    "prismarine-schematic": "github:PrismarineJS/prismarine-schematic",
+    "minecraft-data": "^3.22.0",
+    "prismarine-nbt": "^2.0.0",
+    "prismarine-schematic": "github:PrismarineJS/prismarine-schematic#3833d9fa317fa4f61947360d30f414f1663b5de2",
     "vec3": "^0.1.8"
   }
 }
