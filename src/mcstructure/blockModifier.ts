@@ -53,6 +53,24 @@ class BlockModifier {
     return blocks
   }
 
+  static getRelativeDirectionMappings(facing: CardinalDirection): {
+    front: CardinalDirection
+    back: CardinalDirection
+    left: CardinalDirection
+    right: CardinalDirection
+  } {
+    switch (facing) {
+      case 'north':
+        return { front: 'north', back: 'south', left: 'west', right: 'east' }
+      case 'south':
+        return { front: 'south', back: 'north', left: 'east', right: 'west' }
+      case 'west':
+        return { front: 'west', back: 'east', left: 'south', right: 'north' }
+      case 'east':
+        return { front: 'east', back: 'west', left: 'north', right: 'south' }
+    }
+  }
+
   generateStateIdPalette(version: string) {
     const javaMcData = minecraftData(version)
     return this.palette.map((block) => {
@@ -99,4 +117,4 @@ function zyx2xzy<T>(src: T[], size: Vec3) {
   return out
 }
 
-export { BlockModifier, CardinalDirection }
+export { BlockModifier, CardinalDirection, Direction }
