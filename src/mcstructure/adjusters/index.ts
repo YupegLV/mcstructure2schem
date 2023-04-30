@@ -1,13 +1,14 @@
 import { MappingData } from 'minecraft-data/minecraft-data/data/bedrock/1.19.1/blockMappings.json'
 import { BlockModifier, Direction } from '../blockModifier'
 import stairAdjuster from './stair'
+import glassPaneAdjuster from './glassPane'
 
 export type Adjuster = (
   target: Readonly<MappingData['pc']>,
   adjacents: { [dir in Direction]?: Readonly<MappingData['pc']> },
 ) => MappingData['pc'] | null
 
-const adjusters: Adjuster[] = [stairAdjuster]
+const adjusters: Adjuster[] = [stairAdjuster, glassPaneAdjuster]
 
 function adjustStates(modifier: BlockModifier) {
   for (let x = 0; x < modifier.size.x; x++) {
