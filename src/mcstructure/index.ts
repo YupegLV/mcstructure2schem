@@ -2,14 +2,13 @@ import nbt from 'prismarine-nbt'
 import { Schematic } from 'prismarine-schematic'
 import { Vec3 } from 'vec3'
 import { BlockModifier } from './blockModifier'
-import _ from 'lodash'
 import { McStructure } from './types'
 import adjustStates from './adjusters'
 
 async function parseMcStructureBuffer(
   buffer: Buffer,
   version?: string,
-  offset: Vec3 = new Vec3(0, 0, 0),
+  offset?: Vec3,
 ) {
   return parseMcStructure(
     await nbt.simplify((await nbt.parse(buffer)).parsed),

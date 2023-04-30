@@ -33,7 +33,8 @@ const stairAdjuster: Adjuster = (target, adjacents) => {
     ]),
   )
   if (
-    straightAdjacents.some(
+    straightAdjacents.length === 2 &&
+    straightAdjacents.every(
       (adjacent) =>
         isStair(adjacent) &&
         adjacent.states.half === target.states.half &&
