@@ -1,5 +1,4 @@
 {
   "preset": "ts-jest",
-  "testEnvironment": "node",
-  "roots": ["<rootDir>/test"]
+  "testEnvironment": "node"
 }
