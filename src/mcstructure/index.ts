@@ -17,7 +17,7 @@ async function parseMcStructureBuffer(
   )
 }
 
-function parseMcStructure(
+async function parseMcStructure(
   structure: McStructure,
   version?: string,
   offset: Vec3 = new Vec3(0, 0, 0),
@@ -29,7 +29,7 @@ function parseMcStructure(
   }
   const size = new Vec3(structure.size[0], structure.size[1], structure.size[2])
 
-  const modifier = BlockModifier.fromMcStructure(
+  const modifier = await BlockModifier.fromMcStructure(
     structure.structure.palette.default.block_palette,
     structure.structure.block_indices[0],
     size,

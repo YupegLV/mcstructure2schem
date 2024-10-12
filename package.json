@@ -22,7 +22,7 @@
   "license": "MIT",
   "scripts": {
     "lint": "eslint .",
-    "prettier": "prettier 'src/**/*.ts' --write",
+    "prettier": "prettier \"src/**/*.ts\" --write",
     "test": "jest",
     "build": "run-p build:*",
     "build:cjs": "tsc -p tsconfig.cjs.json",

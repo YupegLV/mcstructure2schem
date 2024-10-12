@@ -1,14 +1,36 @@
 import { Vec3 } from 'vec3'
 import _ from 'lodash'
-import blockMappings, {
-  MappingData,
-} from 'minecraft-data/minecraft-data/data/bedrock/1.19.1/blockMappings.json'
+// import blockMappings, {
+//   MappingData,
+// } from 'minecraft-data/minecraft-data/data/bedrock/1.19.1/blockMappings.json'
 import { BlockInfo } from './types'
 import minecraftData from 'minecraft-data'
 import { getStateId } from 'prismarine-schematic/lib/states'
 
 type CardinalDirection = 'north' | 'south' | 'west' | 'east'
 type Direction = CardinalDirection | 'up' | 'down'
+
+type MappingData = {
+  pc: {
+    name: string
+    states: { [key: string]: string | number | boolean }
+  }
+  pe: {
+    name: string
+    states: { [key: string]: string | number | boolean }
+  }
+}
+
+let blockMappings: MappingData[] = []
+async function fetchBlockMappings() {
+  const response = await fetch(
+    'http://localhost:3000/id2name/blockMappings.json',
+  )
+  if (!response.ok) {
+    throw new Error('Network response was not ok')
+  }
+  blockMappings = await response.json()
+}
 
 class BlockModifier {
   constructor(
@@ -17,7 +39,12 @@ class BlockModifier {
     public size: Vec3,
   ) {}
 
-  static fromMcStructure(palette: BlockInfo[], indices: number[], size: Vec3) {
+  static async fromMcStructure(
+    palette: BlockInfo[],
+    indices: number[],
+    size: Vec3,
+  ) {
+    await fetchBlockMappings()
     const javaPalette = palette
       .map(({ name, ...others }) => ({
         name: name.replace('minecraft:', ''),
