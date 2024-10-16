@@ -6,6 +6,9 @@ import _ from 'lodash'
 import { BlockInfo } from './types'
 import minecraftData from 'minecraft-data'
 import { getStateId } from 'prismarine-schematic/lib/states'
+import dotenv from 'dotenv'
+// 加载环境变量
+dotenv.config()
 
 type CardinalDirection = 'north' | 'south' | 'west' | 'east'
 type Direction = CardinalDirection | 'up' | 'down'
@@ -23,9 +26,11 @@ type MappingData = {
 
 let blockMappings: MappingData[] = []
 async function fetchBlockMappings() {
-  const response = await fetch(
-    'http://localhost:3000/id2name/blockMappings.json',
-  )
+  let bmjson: string = 'http://localhost:3000/config/blockMappings.json'
+  if (process.env.NODE_ENV === 'production') {
+    bmjson = 'https://arch.mc.icu/api/config/blockMappings.json'
+  }
+  const response = await fetch(bmjson)
   if (!response.ok) {
     throw new Error('Network response was not ok')
   }

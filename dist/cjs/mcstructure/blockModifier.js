@@ -65,13 +65,21 @@ exports.BlockModifier = void 0;
 var lodash_1 = __importDefault(require("lodash"));
 var minecraft_data_1 = __importDefault(require("minecraft-data"));
 var states_1 = require("prismarine-schematic/lib/states");
+var dotenv_1 = __importDefault(require("dotenv"));
+// 加载环境变量
+dotenv_1.default.config();
 var blockMappings = [];
 function fetchBlockMappings() {
     return __awaiter(this, void 0, void 0, function () {
-        var response;
+        var bmjson, response;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, fetch('http://localhost:3000/id2name/blockMappings.json')];
+                case 0:
+                    bmjson = 'http://localhost:3000/config/blockMappings.json';
+                    if (process.env.NODE_ENV === 'production') {
+                        bmjson = 'https://arch.mc.icu/api/config/blockMappings.json';
+                    }
+                    return [4 /*yield*/, fetch(bmjson)];
                 case 1:
                     response = _a.sent();
                     if (!response.ok) {

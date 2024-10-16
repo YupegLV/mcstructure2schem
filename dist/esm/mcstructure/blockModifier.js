@@ -59,13 +59,21 @@ var __rest = (this && this.__rest) || function (s, e) {
 import _ from 'lodash';
 import minecraftData from 'minecraft-data';
 import { getStateId } from 'prismarine-schematic/lib/states';
+import dotenv from 'dotenv';
+// 加载环境变量
+dotenv.config();
 var blockMappings = [];
 function fetchBlockMappings() {
     return __awaiter(this, void 0, void 0, function () {
-        var response;
+        var bmjson, response;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, fetch('http://localhost:3000/id2name/blockMappings.json')];
+                case 0:
+                    bmjson = 'http://localhost:3000/config/blockMappings.json';
+                    if (process.env.NODE_ENV === 'production') {
+                        bmjson = 'https://arch.mc.icu/api/config/blockMappings.json';
+                    }
+                    return [4 /*yield*/, fetch(bmjson)];
                 case 1:
                     response = _a.sent();
                     if (!response.ok) {
