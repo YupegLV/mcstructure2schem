@@ -26,7 +26,7 @@ type MappingData = {
 
 let blockMappings: MappingData[] = []
 async function fetchBlockMappings() {
-  let bmjson = 'http://localhost:3000/config/blockMappings.json'
+  let bmjson = 'http://127.0.0.1:3000/config/blockMappings.json'
   if (process.env.NODE_ENV === 'production') {
     bmjson = 'https://arch.mc.icu/api/config/blockMappings.json'
   }

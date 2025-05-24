@@ -69,7 +69,7 @@ function fetchBlockMappings() {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    bmjson = 'http://localhost:3000/config/blockMappings.json';
+                    bmjson = 'http://127.0.0.1:3000/config/blockMappings.json';
                     if (process.env.NODE_ENV === 'production') {
                         bmjson = 'https://arch.mc.icu/api/config/blockMappings.json';
                     }
