@@ -9,6 +9,8 @@ type McStructure = {
     size: [number, number, number];
     structure: {
         block_indices: [number[], number[]];
+        netease_block_indices?: [number[], number[]];
+        netease_bit_count?: number;
         palette: {
             default: {
                 block_palette: BlockInfo[];

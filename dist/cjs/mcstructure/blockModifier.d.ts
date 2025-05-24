@@ -30,12 +30,6 @@ declare class BlockModifier {
     }>;
     setBlock(x: number, y: number, z: number, block: MappingData['pc']): void;
     getAdjacentBlocks(x: number, y: number, z: number): {
-        up?: {
-            name: string;
-            states: {
-                [key: string]: string | number | boolean;
-            };
-        } | undefined;
         north?: {
             name: string;
             states: {
@@ -55,6 +49,12 @@ declare class BlockModifier {
             };
         } | undefined;
         east?: {
+            name: string;
+            states: {
+                [key: string]: string | number | boolean;
+            };
+        } | undefined;
+        up?: {
             name: string;
             states: {
                 [key: string]: string | number | boolean;

@@ -26,7 +26,7 @@ type MappingData = {
 
 let blockMappings: MappingData[] = []
 async function fetchBlockMappings() {
-  let bmjson: string = 'http://localhost:3000/config/blockMappings.json'
+  let bmjson = 'http://localhost:3000/config/blockMappings.json'
   if (process.env.NODE_ENV === 'production') {
     bmjson = 'https://arch.mc.icu/api/config/blockMappings.json'
   }
@@ -107,6 +107,7 @@ class BlockModifier {
     const javaMcData = minecraftData(version)
     return this.palette.map((block) => {
       const stringizedStates = _.mapValues(block.states, _.toString)
+
       return getStateId(
         javaMcData,
         block.name,

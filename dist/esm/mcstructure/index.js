@@ -66,9 +66,17 @@ function parseMcStructure(structure, version, offset) {
                         version = verNum2majorVer(structure.structure.palette.default.block_palette[0].version);
                     }
                     size = new Vec3(structure.size[0], structure.size[1], structure.size[2]);
-                    return [4 /*yield*/, BlockModifier.fromMcStructure(structure.structure.palette.default.block_palette, structure.structure.block_indices[0], size)];
+                    if (!(structure.structure.netease_bit_count !== undefined &&
+                        structure.structure.netease_block_indices !== undefined)) return [3 /*break*/, 2];
+                    return [4 /*yield*/, BlockModifier.fromMcStructure(structure.structure.palette.default.block_palette, convertNBTArray(structure.structure.netease_block_indices[0], structure.structure.netease_bit_count), size)];
                 case 1:
                     modifier = _a.sent();
+                    return [3 /*break*/, 4];
+                case 2: return [4 /*yield*/, BlockModifier.fromMcStructure(structure.structure.palette.default.block_palette, structure.structure.block_indices[0], size)];
+                case 3:
+                    modifier = _a.sent();
+                    _a.label = 4;
+                case 4:
                     adjustStates(modifier);
                     return [2 /*return*/, new Schematic(version, size, offset, modifier.generateStateIdPalette(version), modifier.indices)];
             }
@@ -82,5 +90,33 @@ function verNum2majorVer(version) {
         versionArray[i] = shiftedVersion & 0xff;
     }
     return versionArray.reverse().slice(0, 2).join('.');
+}
+function convertNBTArray(inputArray, bitCount) {
+    // 步骤1: 将输入数组转换为二进制字符串
+    var binaryString = '';
+    for (var _i = 0, inputArray_1 = inputArray; _i < inputArray_1.length; _i++) {
+        var num = inputArray_1[_i];
+        // 处理负数：将负数转换为对应的无符号8位整数
+        var processedNum = num < 0 ? 256 + num : num;
+        // 转换为8位二进制字符串并拼接
+        binaryString += processedNum.toString(2).padStart(8, '0');
+    }
+    // 步骤2: 根据bitCount分块解析二进制字符串
+    var result = [];
+    for (var i = 0; i < binaryString.length; i += bitCount) {
+        var chunk = binaryString.substring(i, i + bitCount);
+        // 步骤3: 只处理完整的块（避免不完整数据干扰）
+        if (chunk.length === bitCount) {
+            // 步骤4: 二进制转十进制
+            var value = parseInt(chunk, 2);
+            var chunkIndex = Math.floor(i / bitCount);
+            // 步骤5: 应用通用变换规则
+            // 主要规则：value - 1
+            // 特殊规则：如果value为6且位置为8，额外减1
+            var transformedValue = Math.max(0, value - 1 - (value === 6 && chunkIndex === 8 ? 1 : 0));
+            result.push(transformedValue);
+        }
+    }
+    return result;
 }
 export { parseMcStructureBuffer, parseMcStructure };
